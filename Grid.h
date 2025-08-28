@@ -6,6 +6,7 @@
 #include <string>    // For std::string
 #include <cassert> // for assert
 #include <tuple>
+#include <map>
 
 class Grid {
 public:

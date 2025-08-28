@@ -1,5 +1,7 @@
 #include "Grid.h"
 
+using wall = std::tuple<double, double, double, double>;
+
 class Multigrid
 {
 public:
@@ -9,7 +11,11 @@ public:
     
 private:
     std::vector<Grid> subgrids{};
-    std::vector<std::tuple<double, double, double, double>> commonWalls{};
-    std::vector<std::tuple<double, double, double, double>> separateWalls{};
+    std::vector<wall> commonWalls{};
+    std::vector<wall> separateWalls{};
+    
+    std::map<wall, int> wallSizesMap{};
+    
+    
     
 };
