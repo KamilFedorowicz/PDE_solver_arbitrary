@@ -5,7 +5,7 @@ Equation01::Equation01(
     Grid& grid,
     std::map<std::string, double> constantsMap
 )
-    : grid(grid),
+: grid(grid),
       EquationBase(grid)
 {
     // read constants from the map

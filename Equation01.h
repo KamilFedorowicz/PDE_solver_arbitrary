@@ -7,12 +7,13 @@
 #include "BoundaryCondition.h"
 #include "EquationBase.h"
 #include "MathOperators.h"
+#include "Multigrid.h"
 
 
 class Equation01 : public EquationBase {
 public:
     Equation01(
-        Grid& grid,
+    Grid& grid,
     std::map<std::string, double> constantsMap
     );
     

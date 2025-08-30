@@ -3,12 +3,6 @@
 #include "Grid.h"
 #include "FieldTypes.h"
 
-enum class BCType {
-    FixedValue,
-    ZeroGradient,
-    Interface
-};
-
 enum class BoundarySide {
     North,
     South,

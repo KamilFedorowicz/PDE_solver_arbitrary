@@ -29,6 +29,10 @@ const std::vector<std::tuple<double, double, double, double>>& Grid::returnWalls
     return wallCoords;
 }
 
+void Grid::getGridInfo()
+{
+    std::cout << "start_x: " << start_x << ", start_y: " << start_y << ", end_x: " << end_x << ", end_y: " << end_y << "; ";
+}
 
 void Grid::displayWalls()
 {
@@ -37,6 +41,25 @@ void Grid::displayWalls()
         std::cout << x1 << " " << y1 << " " << x2 << " " << y2 << "\n";
     }
 }
+
+// getting wall coordinates
+wall Grid::getNorthWall() const {
+    return wall{start_x, end_y, end_x, end_y};
+}
+
+wall Grid::getSouthWall() const {
+    return wall{start_x, start_y, end_x, start_y};
+}
+
+wall Grid::getWestWall() const {
+    return wall{start_x, start_y, start_x, end_y};
+}
+
+wall Grid::getEastWall() const {
+    return wall{end_x, start_y, end_x, end_y};
+}
+
+
 
 double Grid::get_x(int i) const {
     assert(i>=0 && i<=nx);

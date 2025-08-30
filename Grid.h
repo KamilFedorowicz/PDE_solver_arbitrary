@@ -7,6 +7,7 @@
 #include <cassert> // for assert
 #include <tuple>
 #include <map>
+using wall = std::tuple<double, double, double, double>;
 
 class Grid {
 public:
@@ -20,10 +21,15 @@ public:
     const int get_ny() const ;
 
     void displayWalls();
-
     
+    void getGridInfo();
 
-    const std::vector<std::tuple<double, double, double, double>>& returnWalls() const;
+    const std::vector<wall>& returnWalls() const;
+    wall getNorthWall() const ;
+    wall getSouthWall() const ;
+    wall getWestWall() const ;
+    wall getEastWall() const ;
+    
     
 private:
     const int nx, ny;

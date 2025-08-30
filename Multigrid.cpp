@@ -2,10 +2,53 @@
 
 Multigrid::Multigrid(){}
 
+void print(wall wallElem)
+{
+    std::cout << "Wall: " << std::get<0>(wallElem) << " " << std::get<1>(wallElem) << " " << std::get<2>(wallElem) << " " << std::get<3>(wallElem) << " ";
+}
+
+
 void Multigrid::addGrid(Grid& grid)
 {
+    registerNewGrid(grid);
+    
+    const std::vector<wall> walls = grid.returnWalls();
+    for(const auto& singleWall: walls)
+    {
+        auto it = wallConnectedWithGrids.find(singleWall);
+        if (it == wallConnectedWithGrids.end())
+        {
+            // if the wall has no associated grid with it
+            wallConnectedWithGrids[singleWall] = {&grid};
+        } else
+        {
+            // if the wall has an associated grid, add another grid
+            it->second.push_back(&grid);
+        }
+    }
+}
+
+void Multigrid::wallGridConnectionInfo()
+{
+    for(auto singleWall: wallConnectedWithGrids)
+    {
+        print(singleWall.first);
+        for(int i=0; i<(singleWall.second).size(); i++){
+            Grid* tempGrid = (singleWall.second)[i];
+            tempGrid->getGridInfo();
+        }
+        std::cout << std::endl;
+    }
+}
+
+// when we add a new grid, this function goes through all the walls, checks if the neighbouring walls are of the right number of elements
+// then it adds walls to either map of common walls or separate walls
+void Multigrid::registerNewGrid(const Grid grid)
+{
     subgrids.push_back(grid);
-    const std::vector<std::tuple<double, double, double, double>> walls = grid.returnWalls();
+    const std::vector<wall> walls = grid.returnWalls();
+    
+    
     int newConnectedWalls = 0;
     size_t initialNumberOfSeparateWalls = separateWalls.size(); // initially this will be zero
     
@@ -21,26 +64,22 @@ void Multigrid::addGrid(Grid& grid)
             wallSize = grid.get_nx();
         }
         
-        
         auto itWall = wallSizesMap.find(singleWall);
         if (itWall != wallSizesMap.end())
         {
             if(wallSizesMap[singleWall]==wallSize)
             {
-                std::cout << "Correct sizes of added walls" << std::endl;
+                // correct mesh connection. don need to do anything
             }
             else
             {
                 throw std::runtime_error("Incorrectly defined grid connection - different numbers of cells of connected walls. Aborting!!");
             }
-            
         }
         else
         {
             wallSizesMap[singleWall] = wallSize;
         }
-        
-        
         // filling vectors with separate/connected walls
         auto it = std::find(separateWalls.begin(), separateWalls.end(), singleWall);
         if(it==separateWalls.end())
@@ -55,7 +94,6 @@ void Multigrid::addGrid(Grid& grid)
             newConnectedWalls++;
             //std::cout << "Common wall \n";
         }
-        
     }
     
     // we want to new grid to connect with at lease one other wall
@@ -68,8 +106,9 @@ void Multigrid::addGrid(Grid& grid)
     {
         std::cout << "Correctly defined grid connection! \n";
     }
-    
 }
+
+
 
 void Multigrid::displayWalls()
 {

@@ -28,6 +28,7 @@ namespace EquationUtils {
         }
     }
 }
+
 class EquationBase {
 public:
     EquationBase(Grid& grid_);
@@ -35,17 +36,17 @@ public:
 
     virtual void step(std::map<std::string, const BoundaryCondition*>& scalar_bcs, double dt) = 0;
 
-    virtual void solve(int steps,
-                       std::map<std::string, const BoundaryCondition*>& scalar_bcs, double dt);
+    virtual void solve(int steps, std::map<std::string, const BoundaryCondition*>& scalar_bcs, double dt);
 
     virtual std::vector<std::string> getScalarVariableNames() const {
         return {};
     }
     
-
-    
     void initialiseField(std::string name, const scalarField field);
 
+    std::vector<double> returnNorthValue(std::string name);
+    std::vector<double> returnSouthValue(std::string name);
+    
 
     void checkIfAllVariablesAreInitialised();
     void checkIfScalarFieldsAreInitialised();
@@ -56,6 +57,7 @@ public:
     scalarFieldMap scalarFields;
     scalarFieldMap dScalarFields_dt;
     scalarFieldMap scalarSourceTerms;
+    Grid& getGrid();
 
 private:
     Grid& grid;
