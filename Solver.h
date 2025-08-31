@@ -29,14 +29,14 @@ public:
     {
         for (auto it = equation.dScalarFields_dt.begin(); it != equation.dScalarFields_dt.end(); it++)
         {
-            auto fieldName = it->first;
+            const std::string& fieldName = it->first;
             auto dField = it->second; // pointer to derivative
             
             scalarField oldField = *(equation.scalarFields[fieldName]);
             *(equation.scalarFields[fieldName]) = *(equation.scalarFields[fieldName]) + (*dField) * dt;
 
             // the first argument of apply is the field that will be updated
-            scalar_bcs.at(fieldName)->apply(*(equation.scalarFields[fieldName]), grid);
+            scalar_bcs.at(fieldName)->apply(*(equation.scalarFields[fieldName]), grid, fieldName);
             scalarField newField = *(equation.scalarFields[fieldName]);
             
             double error = computeRootMeanSquaredValueOfScalarField(newField - oldField); // calculate the error

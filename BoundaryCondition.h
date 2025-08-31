@@ -13,6 +13,6 @@ enum class BoundarySide {
 class BoundaryCondition {
 public:
     // Apply all BCs (entire field/grid)
-    virtual void apply(scalarField& field, const Grid& grid) const = 0;
+    virtual void apply(scalarField& field, const Grid& grid, std::string fieldName) const = 0;
     virtual ~BoundaryCondition() {}
 };

@@ -8,11 +8,11 @@
 class MyBoundaryCondition : public BoundaryCondition
 {
 public:
-    MyBoundaryCondition(Multigrid _multigrid, std::vector<EquationBase*> _equationsInGrids): multigrid(_multigrid), equationsInGrids(_equationsInGrids){}
+    MyBoundaryCondition(Multigrid _multigrid, std::vector<EquationBase*> _equationsInGrids, std::string fieldName): multigrid(_multigrid), equationsInGrids(_equationsInGrids){}
 
     // === Apply wall and obstacle BCs for a scalar field
-    void apply(scalarField& field, const Grid& grid) const {
-        applyWallBCs(field, grid);
+    void apply(scalarField& field, const Grid& grid, std::string fieldName) const {
+        applyWallBCs(field, grid, fieldName);
     }
     
     // === Wall BC type setters - independent of scalar/vector ===
@@ -68,7 +68,7 @@ private:
 
 
     // === Apply wall BCs for a scalar field
-void applyWallBCs(scalarField& field, const Grid& grid) const {
+void applyWallBCs(scalarField& field, const Grid& grid, std::string fieldName) const {
     int nx = grid.get_nx();
     int ny = grid.get_ny();
 
@@ -81,6 +81,39 @@ void applyWallBCs(scalarField& field, const Grid& grid) const {
             if (westType == BCType::FixedValue) {
                 field[i][0] = west_value_scalar;
             }
+            else if (westType == BCType::Interface)
+            {
+                wall westWall = grid.getWestWall();
+                
+                auto it = multigrid.wallConnectedWithGrids.find(westWall);
+                if (it != multigrid.wallConnectedWithGrids.end())
+                {
+                    const auto& connectedGrids = it->second;
+
+                    for (Grid* neighbor : connectedGrids) {
+                        if (neighbor == &grid) continue;
+
+                        EquationBase* neighborEq = nullptr;
+                        for (auto* eq : equationsInGrids)
+                        {
+                            if (&(eq->getGrid()) == neighbor)
+                            {
+                                neighborEq = eq;
+                                break;
+                            }
+                        }
+
+                        if (neighborEq) // if we found the equation
+                        {
+                            std::vector<double> eastVals = neighborEq->returnEastValue(fieldName);
+
+                            for (int jj = 0; jj < ny && jj < (int)eastVals.size(); ++jj) {
+                                field[jj][0] = eastVals[jj];
+                            }
+                        }
+                    }
+                }
+            }
             else { // ZeroGradient
                 field[i][0] = field[i][1];
             }
@@ -89,6 +122,39 @@ void applyWallBCs(scalarField& field, const Grid& grid) const {
         for (int i = 0; i < ny; ++i) {
             if (eastType == BCType::FixedValue) {
                 field[i][nx - 1] = east_value_scalar;
+            }
+            else if (eastType == BCType::Interface)
+            {
+                wall eastWall = grid.getEastWall(); 
+                
+                auto it = multigrid.wallConnectedWithGrids.find(eastWall);
+                if (it != multigrid.wallConnectedWithGrids.end())
+                {
+                    const auto& connectedGrids = it->second;
+
+                    for (Grid* neighbor : connectedGrids) {
+                        if (neighbor == &grid) continue;
+
+                        EquationBase* neighborEq = nullptr;
+                        for (auto* eq : equationsInGrids)
+                        {
+                            if (&(eq->getGrid()) == neighbor)
+                            {
+                                neighborEq = eq;
+                                break;
+                            }
+                        }
+
+                        if (neighborEq) // if we found the equation
+                        {
+                            std::vector<double> westVals = neighborEq->returnWestValue(fieldName);
+
+                            for (int jj = 0; jj < nx && jj < (int)westVals.size(); ++jj) {
+                                field[jj][nx-1] = westVals[jj];
+                            }
+                        }
+                    }
+                }
             }
             else { // ZeroGradient
                 field[i][nx - 1] = field[i][nx - 2];
@@ -102,28 +168,17 @@ void applyWallBCs(scalarField& field, const Grid& grid) const {
             if (southType == BCType::FixedValue) {
                 field[0][j] = south_value_scalar;
             }
-            else { // ZeroGradient
-                field[0][j] = field[1][j];
-            }
-        }
-        // NORTH
-        for (int j = 0; j < nx; ++j)
-        {
-            if (northType == BCType::FixedValue) {
-                field[ny - 1][j] = north_value_scalar;
-            }
-            else if (northType == BCType::Interface)
+            else if (southType == BCType::Interface)
             {
-                wall northWall = grid.getNorthWall();
+                wall southWall = grid.getSouthWall(); // get the tuple representing the north wall
                 
-                // Find which grids share this wall
-                auto it = multigrid.wallConnectedWithGrids.find(northWall);
-                if (it != multigrid.wallConnectedWithGrids.end())
+                auto it = multigrid.wallConnectedWithGrids.find(southWall); // tells which grids share the same wall
+                if (it != multigrid.wallConnectedWithGrids.end()) // if the wall exists in the map
                 {
-                    const auto& connectedGrids = it->second;
+                    const auto& connectedGrids = it->second; // connectedGrids is the vector of grids that touch this wall
 
                     for (Grid* neighbor : connectedGrids) {
-                        if (neighbor == &grid) continue; // skip myself
+                        if (neighbor == &grid) continue; // skip the current grid - it is always in the list of grids that touch the wall
 
                         // Find the EquationBase corresponding to this neighbor grid
                         EquationBase* neighborEq = nullptr;
@@ -136,10 +191,57 @@ void applyWallBCs(scalarField& field, const Grid& grid) const {
                             }
                         }
 
-                        if (neighborEq)
+                        if (neighborEq) // if we found the equation
                         {
                             // Get the neighbor's SOUTH boundary values
-                            std::vector<double> southVals = neighborEq->returnSouthValue("temperature");
+                            std::vector<double> northVals = neighborEq->returnNorthValue(fieldName);
+                            // you can generalize the name later
+
+                            // Impose them directly on my NORTH boundary
+                            for (int jj = 0; jj < nx && jj < (int)northVals.size(); ++jj) {
+                                field[0][jj] = northVals[jj];
+                            }
+                        }
+                    }
+                }
+            }
+            else { // ZeroGradient
+                field[0][j] = field[1][j];
+            }
+        }
+        // NORTH
+        for (int j = 0; j < nx; ++j)
+        {
+            if (northType == BCType::FixedValue) {
+                field[ny - 1][j] = north_value_scalar;
+            }
+            else if (northType == BCType::Interface)
+            {
+                wall northWall = grid.getNorthWall(); // get the tuple representing the north wall
+                
+                auto it = multigrid.wallConnectedWithGrids.find(northWall); // tells which grids share the same wall
+                if (it != multigrid.wallConnectedWithGrids.end()) // if the wall exists in the map
+                {
+                    const auto& connectedGrids = it->second; // connectedGrids is the vector of grids that touch this wall
+
+                    for (Grid* neighbor : connectedGrids) {
+                        if (neighbor == &grid) continue; // skip the current grid - it is always in the list of grids that touch the wall
+
+                        // Find the EquationBase corresponding to this neighbor grid
+                        EquationBase* neighborEq = nullptr;
+                        for (auto* eq : equationsInGrids)
+                        {
+                            if (&(eq->getGrid()) == neighbor)
+                            {
+                                neighborEq = eq;
+                                break;
+                            }
+                        }
+
+                        if (neighborEq) // if we found the equation
+                        {
+                            // Get the neighbor's SOUTH boundary values
+                            std::vector<double> southVals = neighborEq->returnSouthValue(fieldName);
                             // you can generalize the name later
 
                             // Impose them directly on my NORTH boundary
@@ -149,18 +251,8 @@ void applyWallBCs(scalarField& field, const Grid& grid) const {
                         }
                     }
                 }
-        
-        
-                
-                
-                
-                
-                
-                // ZeroGradient
-                //field[ny - 1][j] = field[ny - 2][j];
-                //std::cout << "We are in the interface! Do nothing" << std::endl;
-
-            } else {
+            } else // zero gradient
+            {
                 field[ny - 1][j] = field[ny - 2][j];
             }
         }

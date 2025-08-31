@@ -63,6 +63,30 @@ std::vector<double> EquationBase::returnSouthValue(std::string name)
     return result;
 }
 
+std::vector<double> EquationBase::returnEastValue(std::string name)
+{
+    scalarField totalScalarField = getScalarField(name);
+    std::vector<double> result(std::vector<double>(grid.get_ny(), 0.0));
+    
+    for(int i=0; i<result.size(); i++)
+    {
+        result[i] = totalScalarField[i][grid.get_nx()-1];
+    }
+    return result;
+}
+
+std::vector<double> EquationBase::returnWestValue(std::string name)
+{
+    scalarField totalScalarField = getScalarField(name);
+    std::vector<double> result(std::vector<double>(grid.get_ny(), 0.0));
+    
+    for(int i=0; i<result.size(); i++)
+    {
+        result[i] = totalScalarField[i][0];
+    }
+    return result;
+}
+
 // check scalar fields
 void EquationBase::checkIfScalarFieldsAreInitialised() {
     for (const auto& it : scalarFields) {

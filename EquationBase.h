@@ -46,6 +46,8 @@ public:
 
     std::vector<double> returnNorthValue(std::string name);
     std::vector<double> returnSouthValue(std::string name);
+    std::vector<double> returnEastValue(std::string name);
+    std::vector<double> returnWestValue(std::string name);
     
 
     void checkIfAllVariablesAreInitialised();
